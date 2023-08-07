@@ -1,3 +1,4 @@
-const data = require("./data.json")
+// const data = require("./data.json")
+const data = require("./data2.json")
 
-console.log(data[0].type)
+console.log(data.name)

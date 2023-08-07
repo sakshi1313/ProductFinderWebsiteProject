@@ -1,7 +1,7 @@
 <% layout('layouts/basestyle')%>
 <link rel="stylesheet" href="/stylesheets/stars.css">
 
-<h1 style="color:white;">All Products</h1>
+<h1>All Products from Amazon</h1>
 
 <% for(let p of pd) { %>
 <div class="card mb-3">
@@ -12,16 +12,27 @@
         <div class="col-md-8">
             <div class="card-body">
                 <h5 class="card-title"><%= p.name %> </h5>
-                <p class="card-text">Price:<%p.price_string%></p>
+                <p class="card-text">Price:<%=p.price_string%></p>
                 <p class="starability-result" data-rating="<%=p.stars%>">
                     Rated: <%=p.stars%> stars
                 </p>
-                <p class="card-text">Rating:<%p.total_reviews%></p>
-                <p class="card-text">
-                    <small class="text-muted"><%= p.url%></small>
-                </p>
+                <p class="card-text">Rating:<%=p.total_reviews%></p>
+                <!-- <p class="card-text">
+                    <small class="text-muted"><%=p.url%></small>
+                </p> -->
+                <a href="<%=p.url%>">View</a>
+
+                <form action="/products/bag" method="POST">
+                    <!-- object se json string me convert karne ke liye...so that pura pass ho jaye when form submit krna h -->
+                    <input type="hidden" name="productData" value="<%= JSON.stringify(p) %>">
+                    <button class="btn btn-success btn-block" type="submit">Add to list</button>
+                </form>
+
+
+
             </div>
         </div>
     </div>
 </div>
 <% }%>
+

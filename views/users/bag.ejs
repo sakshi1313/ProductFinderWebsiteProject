@@ -1,0 +1,29 @@
+<% layout('layouts/basestyle')%>
+<h1>Your Bag</h1>
+
+<% if (products && products.length > 0) { %>
+    <div>
+        <a href="/products/<%=products._id%>"> Show all products </a>
+    </div>
+<div class="card mb-3">
+    <div class="row">
+        <% products.forEach(function(product) { %>
+            <div class="col-md-4">
+                <img class="img-fluid" alt="" src="<%=product.image%>">
+            </div>
+            <li>
+                <div class="card-body">
+                <h3><%=product.name%></h3>
+                <p>Price: <%=product.price%></p>
+                <a href="<%=product.image%>">View</a>
+                </div>
+            </li>
+            <form action="/bag?_method=DELETE" method="POST">
+                <button class="btn btn-sm btn-danger"  value="<%=product._id%>" type="submit" name="id"> Delete </button>
+            </form>
+        <%});%>
+    </div>
+</div>
+<% } %>
+
+
