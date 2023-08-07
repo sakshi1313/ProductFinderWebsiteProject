@@ -1,17 +1,16 @@
-<% layout('layouts/boilerplate')%>
+<% layout('layouts/basestyle')%>
 
-<link rel="stylesheet" href="/stylesheets/backgroundimg.css">
 
 <div class="container d-flex justify-content-center align-items-center mt-5">
     <div class="row">
         <div class="col-md-6 offset-md-3 col-xl-4 offset-xl-4">
             <div class="card shadow">
-                <img src="https://cdn.wallpapersafari.com/74/45/Tm67Ja.jpg"
-                    alt="" class="card-img-top" />
+                <!-- <img src="https://cdn.wallpapersafari.com/74/45/Tm67Ja.jpg" -->
+                    <!-- alt="" class="card-img-top" /> -->
                 <div class="card-body">
                     <h5 class="card-title">SignUp</h5>
 
-                    <form action="/register" method="POST" novalidate class="validated-form">
+                    <form action="/signup" method="POST" novalidate class="validated-form">
                         <div class="mb-3">
                             <label class="form-label" for="username">Username</label>
                             <input class="form-control" type="text" id="username" name="username" required>

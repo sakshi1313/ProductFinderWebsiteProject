@@ -2,6 +2,8 @@
 const BaseJoi = require('joi');
 
 const sanitizeHtml = require('sanitize-html');
+const Joi = BaseJoi.extend(extension)
+
 const extension = (joi) => ({
     type: 'string',
     base: joi.string(),
@@ -22,7 +24,7 @@ const extension = (joi) => ({
     }
 });
 
-const Joi = BaseJoi.extend(extension)
+
 
 module.exports.ProductSchema = Joi.object({
     product: Joi.object({

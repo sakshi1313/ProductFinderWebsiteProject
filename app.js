@@ -1,24 +1,32 @@
 if(process.env.NODE_ENV != "production"){
     require('dotenv').config()
 }
-const express  =require('express')
-const app = express()
-const path = require('path')
-const mongoose = require('mongoose');
+const express            =require('express')
+const app                = express()
+const path               = require('path')
+const mongoose           = require('mongoose');
 
-const catchAsync = require('./utils/catchAsync')
-const ExpressError = require('./utils/ExpressError')
+const catchAsync         = require('./utils/catchAsync')
+const ExpressError       = require('./utils/ExpressError')
 
-const ejsMate = require('ejs-mate');
+const ejsMate            = require('ejs-mate');
 const { default: axios } = require('axios');
 app.engine('ejs',ejsMate);
 const cors = require('cors');
+// to be moved to controller ---------------------------------
+const Product            = require('./models/products')
+const User               = require('./models/users');
 
 
 //--------------------- sessions----------------------
-const session = require("express-session")
-const flash   = require("connect-flash")
+const session           = require("express-session")
+const flash             = require("connect-flash")
 const methodOverride    = require('method-override');
+
+const {isLoggedIn} = require("./middleware");
+const { storeReturnTo } = require('./middleware');
+
+
 
 const sessionConfig = {
     name: "mycookie",
@@ -45,8 +53,6 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 // ---------------------------------------------------------
 
-// to be moved to controller ---------------------------------
-const Product = require('./models/products')
 
 //--------------------------------------------------------------
 app.use(cors())
@@ -65,9 +71,26 @@ mongoose.connect("mongodb://localhost:27017/product-data", {
         console.log(err)
     })
 
+
+//------------------------------AUTHENTICATION------------------------------
+const passport = require('passport')
+const LocalStrategy = require('passport-local'); // authentication
+
+app.use(passport.initialize())
+app.use(passport.session())
+passport.use(new LocalStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+
+
+
+
 // axios ------------------------
 // flash------------------------------------
 app.use((req,res,next) => {
+    res.locals.currentUser = req.user;
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
     next();
@@ -122,16 +145,16 @@ app.post('/products' , catchAsync(async(req,res) => {
 
 
 // ---------------------------------------------------------------
-// adding "add to bucket" form
+// ---------------------------adding "ADD TO BAG" form
 // const productsInBag = [];
 
-app.get('/bag', async(req,res) => {
+app.get('/bag', isLoggedIn,async(req,res) => {
     const products = await Product.find();
     // console.log(products)
     res.render('users/bag',{products});
 })
 
-app.post('/products/bag' , catchAsync(async(req,res) => {
+app.post('/products/bag' , isLoggedIn, catchAsync(async(req,res) => {
     // res.send(req.body.productData)
     const productData = JSON.parse(req.body.productData);
     const{name,price,image} = productData
@@ -151,8 +174,10 @@ app.post('/products/bag' , catchAsync(async(req,res) => {
     // res.send(productData)   
 }))
 
-// -------------------- DELETE------------------------------
-app.delete('/bag', async(req,res)=>{ 
+
+//------------------------------- DELETING PRODUCT----------------
+
+app.delete('/bag', isLoggedIn, async(req,res)=>{ 
         // res.send(req.params.id)
         const id = req.body.id;
         await Product.findByIdAndDelete(id)
@@ -161,9 +186,50 @@ app.delete('/bag', async(req,res)=>{
 })
 
 
-app.get('/',(req,res) => {
-    // console.log("here")
-    res.render("searchPage/home")
+// ------------------------------------------------------ USERS --------------------------------------------
+
+app.get('/signup',(req,res) => {
+    res.render('users/signup');
+})
+
+app.post('/signup',catchAsync(async(req,res) => {
+    try{
+        const {email, username, password} = req.body;
+        const user = new User({email, username})
+        const registeredUser = await User.register(user, password);
+        req.login(registeredUser,err => {
+            if(err) return next(err);
+            req.flash('success','Welcome to yourFinder');
+            res.redirect('/searchproducts')
+        })
+    } catch(e){
+        req.flash("error", e.message);
+        res.redirect('/signup')
+    }
+    
+    // res.send(registeredUser);  
+}))
+
+app.get('/login',(req,res) => {
+    res.render('users/login');
+})
+
+app.post('/login',storeReturnTo,passport.authenticate('local', {failureFlash: true, failureRedirect: '/login'}),(req,res) => {
+    req.flash('success', 'welcome back!')
+    // console.log(res.locals.returnTo)
+    const redirectUrl = res.locals.returnTo || '/searchproducts'; 
+    res.redirect(redirectUrl);
+})
+
+
+app.get('/logout',(req, res, next) => {
+    req.logout(function (err) {
+        if (err) {
+            return next(err);
+        }
+        req.flash('success', 'Goodbye!');
+        res.redirect('/searchproducts');
+    });
 })
 
 
@@ -171,7 +237,14 @@ app.get('/',(req,res) => {
 
 
 
-//------------------------------- DELETING PRODUCT----------------
+
+
+
+
+
+
+
+
 
 
 
@@ -189,9 +262,6 @@ app.use((err,req,res,next) => {
     res.status(statusCode).render('error',{err});
     res.send('something went wrong');
 })
-
-
-
 
 
 app.listen(8080, () => {
